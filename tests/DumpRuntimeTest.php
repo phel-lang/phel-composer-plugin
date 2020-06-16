@@ -62,10 +62,10 @@ use Phel\Runtime;
 require __DIR__ .'/autoload.php';
 
 \$rt = Runtime::initialize();
-\$rt->addPath("my-namespace\\", [__DIR__ . '/../src/']);
-\$rt->addPath("my-other-namespace\\", [__DIR__ . '/../lib/', __DIR__ . '/../other/']);
-\$rt->addPath("my-test-namespace\\", [__DIR__ . '/../tests/']);
-\$rt->loadNs("phel\\core");
+\$rt->addPath("my-namespace\\\\", [__DIR__ . '/../src/']);
+\$rt->addPath("my-other-namespace\\\\", [__DIR__ . '/../lib/', __DIR__ . '/../other/']);
+\$rt->addPath("my-test-namespace\\\\", [__DIR__ . '/../tests/']);
+\$rt->loadNs("phel\\\\core");
 return \$rt;
 
 EOF;
@@ -134,11 +134,11 @@ use Phel\Runtime;
 require __DIR__ .'/autoload.php';
 
 \$rt = Runtime::initialize();
-\$rt->addPath("my-namespace\\", [__DIR__ . '/../src/']);
-\$rt->addPath("my-other-namespace\\", [__DIR__ . '/../lib/', __DIR__ . '/../other/']);
-\$rt->addPath("my-test-namespace\\", [__DIR__ . '/../tests/']);
-\$rt->addPath("dep1\\", [__DIR__ . '/test/dep1/src/phel/']);
-\$rt->loadNs("phel\\core");
+\$rt->addPath("my-namespace\\\\", [__DIR__ . '/../src/']);
+\$rt->addPath("my-other-namespace\\\\", [__DIR__ . '/../lib/', __DIR__ . '/../other/']);
+\$rt->addPath("my-test-namespace\\\\", [__DIR__ . '/../tests/']);
+\$rt->addPath("dep1\\\\", [__DIR__ . '/test/dep1/src/phel/']);
+\$rt->loadNs("phel\\\\core");
 return \$rt;
 
 EOF;

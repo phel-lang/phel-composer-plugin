@@ -77,11 +77,12 @@ require __DIR__ .'/autoload.php';
 EOF;
 
         foreach ($loadConfig as $ns => $paths) {
+            $encodedNs = addslashes($ns);
             $pathString = implode("', __DIR__ . '", array_map('addslashes', $paths));
-            $template .= "\$rt->addPath(\"$ns\", [__DIR__ . '$pathString']);\n";
+            $template .= "\$rt->addPath(\"$encodedNs\", [__DIR__ . '$pathString']);\n";
         }
 
-        $template .= "\$rt->loadNs(\"phel\\core\");\n";
+        $template .= "\$rt->loadNs(\"phel\\\\core\");\n";
         $template .= "return \$rt;\n";
 
         return $template;
