@@ -10,26 +10,27 @@ final class DumpRuntime
 {
     public function run(Composer $composer): void
     {
+        /** @psalm-suppress DuplicateArrayKey */
         $packages = [
             $composer->getPackage(),
-            ...$composer->getLocker()->getLockedRepository()->getPackages()
+            ...$composer->getLocker()->getLockedRepository()->getPackages(),
         ];
 
         /** @var array<string, array<string>> $loadConfig */
         $loadConfig = [];
         foreach ($packages as $i => $package) {
             $extra = $package->getExtra();
-            if (!isset($extra["phel"])) {
+            if (!isset($extra['phel'])) {
                 continue;
             }
 
             // First package is the current project (no dependency)
             $isRootPackage = $i === 0;
             $pathPrefix = $isRootPackage ? '/..' : '/' . $package->getName();
-            $loaderNames = $isRootPackage ? ["loader", "loader-dev"] : ["loader"];
+            $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
 
             /** @var array */
-            $phelConfig = $extra["phel"];
+            $phelConfig = $extra['phel'];
             foreach ($loaderNames as $loaderName) {
                 if (!isset($phelConfig[$loaderName])) {
                     continue;

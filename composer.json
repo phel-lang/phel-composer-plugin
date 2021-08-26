@@ -13,13 +13,14 @@
     ],
     "require": {
         "php": ">=7.4",
-	    "composer-plugin-api": "^1.1.0 || ^2.0"
+        "composer-plugin-api": "^1.1.0 || ^2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9",
-        "vimeo/psalm": "^3.11",
-        "friendsofphp/php-cs-fixer": "^2.16",
-        "composer/composer": "^1.10.0"
+        "phpunit/phpunit": "^9.5",
+        "vimeo/psalm": "^4.9",
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "composer/composer": "^2.1",
+        "symfony/var-dumper": "^5.3"
     },
     "autoload": {
         "psr-4": {
@@ -32,13 +33,23 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test:coverage": "vendor/bin/phpunit --coverage-html data/coverage-report",
-        "psalm": "vendor/bin/psalm",
-        "test-all": "composer psalm && composer test",
-        "csfix": "vendor/bin/php-cs-fixer fix"
+        "test-all": [
+            "@psalm",
+            "@csrun",
+            "@phpunit"
+        ],
+        "phpunit": "vendor/bin/phpunit",
+        "phpunit:coverage": "vendor/bin/phpunit --coverage-html data/coverage-report",
+        "psalm": "./vendor/bin/psalm --no-cache",
+        "csfix": "./vendor/bin/php-cs-fixer fix --allow-risky=yes",
+        "csrun": "./vendor/bin/php-cs-fixer fix --allow-risky=yes --dry-run"
     },
     "extra": {
         "class": "Phel\\Composer\\Plugin"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        }
     }
 }
