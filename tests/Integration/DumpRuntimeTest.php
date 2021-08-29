@@ -11,26 +11,25 @@ use Composer\Package\Package;
 use Composer\Package\RootPackage;
 use Composer\Repository\ArrayRepository;
 use Phel\Composer\DumpRuntime;
-use Phel\Runtime\RuntimeSingleton;
 use PHPUnit\Framework\TestCase;
 
 final class DumpRuntimeTest extends TestCase
 {
-    public function testRunNoDependencies(): void
+    public function test_run_no_dependencies(): void
     {
         $tmpDir = sys_get_temp_dir();
         $runtimeFile = $tmpDir . '/PhelRuntime.php';
         @unlink($runtimeFile);
 
-        $rootPackage = new RootPackage("my-package", "1.0", "1.0");
+        $rootPackage = new RootPackage('my-package', '1.0', '1.0');
         $rootPackage->setExtra([
-            "phel" => [
-                "loader" => [
-                    "my-namespace\\" => "src/",
-                    "my-other-namespace\\" => ["lib/", "other/"],
+            'phel' => [
+                'loader' => [
+                    'my-namespace\\' => 'src/',
+                    'my-other-namespace\\' => ['lib/', 'other/'],
                 ],
-                "loader-dev" => [
-                    "my-test-namespace\\" => "tests/",
+                'loader-dev' => [
+                    'my-test-namespace\\' => 'tests/',
                 ],
             ],
         ]);
@@ -75,33 +74,33 @@ EOF;
         self::assertEquals($expected, $result);
     }
 
-    public function testRunWithDependencies(): void
+    public function test_run_with_dependencies(): void
     {
         $tmpDir = sys_get_temp_dir();
         $runtimeFile = $tmpDir . '/PhelRuntime.php';
         @unlink($runtimeFile);
 
-        $rootPackage = new RootPackage("test/my-package", "1.0", "1.0");
+        $rootPackage = new RootPackage('test/my-package', '1.0', '1.0');
         $rootPackage->setExtra([
-            "phel" => [
-                "loader" => [
-                    "my-namespace\\" => "src/",
-                    "my-other-namespace\\" => ["lib/", "other/"],
+            'phel' => [
+                'loader' => [
+                    'my-namespace\\' => 'src/',
+                    'my-other-namespace\\' => ['lib/', 'other/'],
                 ],
-                "loader-dev" => [
-                    "my-test-namespace\\" => "tests/",
+                'loader-dev' => [
+                    'my-test-namespace\\' => 'tests/',
                 ],
             ],
         ]);
 
-        $dep1Package = new Package("test/dep1", "1.0", "1.0");
+        $dep1Package = new Package('test/dep1', '1.0', '1.0');
         $dep1Package->setExtra([
-            "phel" => [
-                "loader" => [
-                    "dep1\\" => "src/phel/",
+            'phel' => [
+                'loader' => [
+                    'dep1\\' => 'src/phel/',
                 ],
-                "loader-dev" => [
-                    "dep1\\" => "tests/phel/",
+                'loader-dev' => [
+                    'dep1\\' => 'tests/phel/',
                 ],
             ],
         ]);
