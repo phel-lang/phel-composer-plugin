@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phel\Composer;
 
 use Composer\Composer;
+use Composer\Package\Package;
 
 final class DumpRuntime
 {
@@ -16,49 +17,78 @@ final class DumpRuntime
             ...$composer->getLocker()->getLockedRepository()->getPackages(),
         ];
 
-        /** @var array<string, array<string>> $loadConfig */
-        $loadConfig = [];
-        foreach ($packages as $i => $package) {
-            $extra = $package->getExtra();
-            if (!isset($extra['phel'])) {
-                continue;
-            }
-
-            // First package is the current project (no dependency)
-            $isRootPackage = $i === 0;
-            $pathPrefix = $isRootPackage ? '/..' : '/' . $package->getName();
-            $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
-
-            /** @var array */
-            $phelConfig = $extra['phel'];
-            foreach ($loaderNames as $loaderName) {
-                if (!isset($phelConfig[$loaderName])) {
-                    continue;
-                }
-
-                /** @var array<string, string|array<string>> $packageLoadConfig */
-                $packageLoadConfig = $phelConfig[$loaderName];
-                foreach ($packageLoadConfig as $ns => $pathList) {
-                    if (!isset($loadConfig[$ns])) {
-                        $loadConfig[$ns] = [];
-                    }
-
-                    if (is_string($pathList)) {
-                        $pathList = [$pathList];
-                    }
-
-                    foreach ($pathList as $path) {
-                        $loadConfig[$ns][] = $pathPrefix . '/' . $path;
-                    }
-                }
-            }
-        }
-
+        /** @var list<Package> $packages */
+        $loadedConfig = $this->loadConfig($packages);
 
         /** @var string $vendorDir */
         $vendorDir = $composer->getConfig()->get('vendor-dir');
-        $template = $this->createRuntimeScript($loadConfig);
+        $template = $this->createRuntimeScript($loadedConfig);
         file_put_contents($vendorDir . '/PhelRuntime.php', $template);
+    }
+
+    /**
+     * @param list<Package> $packages
+     *
+     * @return array<string, list<string>>
+     */
+    private function loadConfig(array $packages): array
+    {
+        /** @var array<string, list<string>> $result */
+        $result = [];
+
+        foreach ($packages as $i => $package) {
+            $this->loadConfigPackage($result, $i, $package);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, list<string>> $result
+     */
+    private function loadConfigPackage(array &$result, int $i, Package $package): void
+    {
+        $extra = $package->getExtra();
+
+        if (!isset($extra['phel'])) {
+            return;
+        }
+
+        // First package is the current project (no dependency)
+        $isRootPackage = ($i === 0);
+        $pathPrefix = $isRootPackage ? '/..' : '/' . $package->getName();
+        $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
+
+        /** @var array<string,array<string, string|list<string>>> $phelConfig */
+        $phelConfig = $extra['phel'];
+
+        foreach ($loaderNames as $loaderName) {
+            if (!isset($phelConfig[$loaderName])) {
+                continue;
+            }
+            $this->loadConfigNames($result, $phelConfig[$loaderName], $pathPrefix);
+        }
+    }
+
+    /**
+     * @param array<string, list<string>> $result
+     * @param array<string, string|list<string>> $packageLoadConfig
+     */
+    private function loadConfigNames(array &$result, array $packageLoadConfig, string $pathPrefix): void
+    {
+        foreach ($packageLoadConfig as $ns => $pathList) {
+            if (!isset($result[$ns])) {
+                $result[$ns] = [];
+            }
+
+            if (is_string($pathList)) {
+                $pathList = [$pathList];
+            }
+
+            foreach ($pathList as $path) {
+                $result[$ns][] = $pathPrefix . '/' . $path;
+            }
+        }
     }
 
     /**
