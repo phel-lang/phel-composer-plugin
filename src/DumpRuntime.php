@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phel\Composer;
 
 use Composer\Composer;
+use Composer\Package\PackageInterface;
 
 final class DumpRuntime
 {
@@ -16,53 +17,85 @@ final class DumpRuntime
             ...$composer->getLocker()->getLockedRepository()->getPackages(),
         ];
 
-        /** @var array<string, array<string>> $loadConfig */
-        $loadConfig = [];
-        foreach ($packages as $i => $package) {
-            $extra = $package->getExtra();
-            if (!isset($extra['phel'])) {
-                continue;
-            }
-
-            // First package is the current project (no dependency)
-            $isRootPackage = $i === 0;
-            $pathPrefix = $isRootPackage ? '/..' : '/' . $package->getName();
-            $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
-
-            /** @var array */
-            $phelConfig = $extra['phel'];
-            foreach ($loaderNames as $loaderName) {
-                if (!isset($phelConfig[$loaderName])) {
-                    continue;
-                }
-
-                /** @var array<string, string|array<string>> $packageLoadConfig */
-                $packageLoadConfig = $phelConfig[$loaderName];
-                foreach ($packageLoadConfig as $ns => $pathList) {
-                    if (!isset($loadConfig[$ns])) {
-                        $loadConfig[$ns] = [];
-                    }
-
-                    if (is_string($pathList)) {
-                        $pathList = [$pathList];
-                    }
-
-                    foreach ($pathList as $path) {
-                        $loadConfig[$ns][] = $pathPrefix . '/' . $path;
-                    }
-                }
-            }
-        }
-
+        /** @var list<PackageInterface> $packages */
+        $loadedConfig = $this->loadConfig($packages);
 
         /** @var string $vendorDir */
         $vendorDir = $composer->getConfig()->get('vendor-dir');
-        $template = $this->createRuntimeScript($loadConfig);
+        $template = $this->createRuntimeScript($loadedConfig);
         file_put_contents($vendorDir . '/PhelRuntime.php', $template);
     }
 
     /**
-     * @param array<string, array<string>> $loadConfig
+     * @param list<PackageInterface> $packages
+     *
+     * @return array<string, list<string>>
+     */
+    private function loadConfig(array $packages): array
+    {
+        /** @var array<string, list<string>> $result */
+        $result = [];
+
+        foreach ($packages as $i => $package) {
+            $result = $this->loadConfigPackage($result, $i, $package);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, list<string>> $result
+     *
+     * @return array<string, list<string>>
+     */
+    private function loadConfigPackage(array $result, int $i, PackageInterface $package): array
+    {
+        $extra = $package->getExtra();
+
+        if (!isset($extra['phel'])) {
+            return $result;
+        }
+
+        /** @var array<string,array<string, string|list<string>>> $phelConfig */
+        $phelConfig = $extra['phel'];
+        // First package is the current project (no dependency)
+        $isRootPackage = ($i === 0);
+        $pathPrefix = $isRootPackage ? '/..' : '/' . $package->getName();
+
+        foreach ($this->loaderNames($isRootPackage, $phelConfig) as $loaderName) {
+            $result = $this->loadConfigNames($result, $phelConfig[$loaderName], $pathPrefix);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, list<string>> $result
+     * @param array<string, string|list<string>> $packageLoadConfig
+     *
+     * @return array<string, list<string>>
+     */
+    private function loadConfigNames(array $result, array $packageLoadConfig, string $pathPrefix): array
+    {
+        foreach ($packageLoadConfig as $ns => $pathList) {
+            if (!isset($result[$ns])) {
+                $result[$ns] = [];
+            }
+
+            if (is_string($pathList)) {
+                $pathList = [$pathList];
+            }
+
+            foreach ($pathList as $path) {
+                $result[$ns][] = $pathPrefix . '/' . $path;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array<string, list<string>> $loadConfig
      */
     private function createRuntimeScript(array $loadConfig): string
     {
@@ -88,5 +121,23 @@ EOF;
         $template .= "return \$rt;\n";
 
         return $template;
+    }
+
+    /**
+     * @param bool $isRootPackage First package is the current project (no dependency)
+     * @param array<string,array<string, string|list<string>>> $phelConfig
+     *
+     * @return list<string>
+     */
+    private function loaderNames(bool $isRootPackage, array $phelConfig): array
+    {
+        $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
+
+        $loaderNames = array_filter(
+            $loaderNames,
+            static fn ($loaderName) => isset($phelConfig[$loaderName])
+        );
+
+        return array_values($loaderNames);
     }
 }
