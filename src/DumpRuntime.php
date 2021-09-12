@@ -56,18 +56,13 @@ final class DumpRuntime
             return $result;
         }
 
+        /** @var array<string,array<string, string|list<string>>> $phelConfig */
+        $phelConfig = $extra['phel'];
         // First package is the current project (no dependency)
         $isRootPackage = ($i === 0);
         $pathPrefix = $isRootPackage ? '/..' : '/' . $package->getName();
-        $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
 
-        /** @var array<string,array<string, string|list<string>>> $phelConfig */
-        $phelConfig = $extra['phel'];
-
-        foreach ($loaderNames as $loaderName) {
-            if (!isset($phelConfig[$loaderName])) {
-                continue;
-            }
+        foreach ($this->loaderNames($isRootPackage, $phelConfig) as $loaderName) {
             $result = $this->loadConfigNames($result, $phelConfig[$loaderName], $pathPrefix);
         }
 
@@ -126,5 +121,23 @@ EOF;
         $template .= "return \$rt;\n";
 
         return $template;
+    }
+
+    /**
+     * @param bool $isRootPackage First package is the current project (no dependency)
+     * @param array<string,array<string, string|list<string>>> $phelConfig
+     *
+     * @return list<string>
+     */
+    private function loaderNames(bool $isRootPackage, array $phelConfig): array
+    {
+        $loaderNames = $isRootPackage ? ['loader', 'loader-dev'] : ['loader'];
+
+        $loaderNames = array_filter(
+            $loaderNames,
+            static fn ($loaderName) => isset($phelConfig[$loaderName])
+        );
+
+        return array_values($loaderNames);
     }
 }
