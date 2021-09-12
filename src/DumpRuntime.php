@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phel\Composer;
 
 use Composer\Composer;
-use Composer\Package\Package;
+use Composer\Package\PackageInterface;
 
 final class DumpRuntime
 {
@@ -17,7 +17,7 @@ final class DumpRuntime
             ...$composer->getLocker()->getLockedRepository()->getPackages(),
         ];
 
-        /** @var list<Package> $packages */
+        /** @var list<PackageInterface> $packages */
         $loadedConfig = $this->loadConfig($packages);
 
         /** @var string $vendorDir */
@@ -27,7 +27,7 @@ final class DumpRuntime
     }
 
     /**
-     * @param list<Package> $packages
+     * @param list<PackageInterface> $packages
      *
      * @return array<string, list<string>>
      */
@@ -46,7 +46,7 @@ final class DumpRuntime
     /**
      * @param array<string, list<string>> $result
      */
-    private function loadConfigPackage(array &$result, int $i, Package $package): void
+    private function loadConfigPackage(array &$result, int $i, PackageInterface $package): void
     {
         $extra = $package->getExtra();
 
@@ -92,7 +92,7 @@ final class DumpRuntime
     }
 
     /**
-     * @param array<string, array<string>> $loadConfig
+     * @param array<string, list<string>> $loadConfig
      */
     private function createRuntimeScript(array $loadConfig): string
     {
