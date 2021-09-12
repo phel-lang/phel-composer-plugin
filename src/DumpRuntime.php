@@ -37,7 +37,7 @@ final class DumpRuntime
         $result = [];
 
         foreach ($packages as $i => $package) {
-            $this->loadConfigPackage($result, $i, $package);
+            $result = $this->loadConfigPackage($result, $i, $package);
         }
 
         return $result;
@@ -45,13 +45,15 @@ final class DumpRuntime
 
     /**
      * @param array<string, list<string>> $result
+     *
+     * @return array<string, list<string>>
      */
-    private function loadConfigPackage(array &$result, int $i, PackageInterface $package): void
+    private function loadConfigPackage(array $result, int $i, PackageInterface $package): array
     {
         $extra = $package->getExtra();
 
         if (!isset($extra['phel'])) {
-            return;
+            return $result;
         }
 
         // First package is the current project (no dependency)
@@ -66,15 +68,19 @@ final class DumpRuntime
             if (!isset($phelConfig[$loaderName])) {
                 continue;
             }
-            $this->loadConfigNames($result, $phelConfig[$loaderName], $pathPrefix);
+            $result = $this->loadConfigNames($result, $phelConfig[$loaderName], $pathPrefix);
         }
+
+        return $result;
     }
 
     /**
      * @param array<string, list<string>> $result
      * @param array<string, string|list<string>> $packageLoadConfig
+     *
+     * @return array<string, list<string>>
      */
-    private function loadConfigNames(array &$result, array $packageLoadConfig, string $pathPrefix): void
+    private function loadConfigNames(array $result, array $packageLoadConfig, string $pathPrefix): array
     {
         foreach ($packageLoadConfig as $ns => $pathList) {
             if (!isset($result[$ns])) {
@@ -89,6 +95,8 @@ final class DumpRuntime
                 $result[$ns][] = $pathPrefix . '/' . $path;
             }
         }
+
+        return $result;
     }
 
     /**
